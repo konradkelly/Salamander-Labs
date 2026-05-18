@@ -26,13 +26,16 @@ export default function Videos() {
   if (error) {
     return <p role="alert">Error: {error}</p>;
   }
-  
+
   return (
     <div>
       <h1>Available Videos</h1>
       <ul>
         {videos.map((filename) => (
-          <li key={filename}>{filename}</li>
+          <li key={filename}>
+      <Link to={`/preview/${filename}`}>{filename}</Link>
+        </li>
+          
         ))}
       </ul>
     </div>

@@ -16,6 +16,8 @@ const thumbnails = {
   "tank_view_long.mp4": "https://placehold.co/320x180?text=tank_view_long",
 };
 
+const jobStates = new Map();
+
 // Tiny helper that adds a fake delay so loading states are visible
 // during development. Real networks aren't instant; pretending they
 // are will hide UI bugs.
@@ -38,6 +40,17 @@ export async function submitProcessingJob(filename, targetColor, threshold) {
   await delay(500);
   // Pretend the server gave us a job id.
   return { jobId: `mock-${Date.now()}` };
+
+  jobStates.set(jobId, {
+    status: "processing",
+    filename,
+    targetColor,
+    threshold,
+    createdAt: Date.now(),
+    processingTime: 3000,
+  });
+
+  return { jobId };
 }
 
 export async function getJobStatus(jobId) {

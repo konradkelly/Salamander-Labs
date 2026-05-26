@@ -1,7 +1,7 @@
 // Fake data the mock functions return. Replace these with realistic
 // values once you've looked at the real API's example responses.
 const videos = [
-  "salamander1.mp4",
+  "/salamander1.jpg",
   "salamander2.mov",
   "forest_intro.mp4",
   "tank_view_long.mp4",

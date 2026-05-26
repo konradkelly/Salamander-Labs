@@ -7,9 +7,23 @@ export default function Preview() {
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const canvasRef = useRef(null)
+  const [color, setColor] = useState("#ff0000");
+  const [threshold, setThreshold] = useState(50);
+  const canvasRef = useRef(null);
 
+  const handleColorChange = (e) => {
+    const nextColor = e.target.value;
+    console.log('Color changed:', nextColor);
+    setColor(nextColor);
+  };
 
+  const handleThresholdChange = (e) => {
+    const nextThreshold = Number(e.target.value);
+    console.log('Threshold changed:', nextThreshold);
+    setThreshold(nextThreshold);
+  };
+
+ // Fetch thumbnail for current filename and manage loading/error state
   useEffect(() => {
     if (!filename) {
       setThumbnailUrl(null);
@@ -32,23 +46,25 @@ export default function Preview() {
         setLoading(false);
       });
   }, [filename]);
+
+  // Draw thumbnail image to canvas when thumbnailUrl changes
   useEffect(() => {
-  if (!thumbnailUrl) return;
+    if (!thumbnailUrl) return;
 
-  const canvas = canvasRef.current;
-  const ctx = canvas.getContext("2d");
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-  const img = new Image();
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
 
-  img.src = thumbnailUrl;
+    img.src = thumbnailUrl;
 
-  img.onload = () => {
-    canvas.width = img.width;
-    canvas.height = img.height;
-
-    ctx.drawImage(img, 0, 0);
-  };
-}, [thumbnailUrl]);
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+    };
+  }, [thumbnailUrl]);
 
   let content;
 
@@ -78,6 +94,30 @@ export default function Preview() {
         {filename ? `Preview: ${filename}` : 'Preview'}
       </h1>
       {content}
+      <canvas className="mt-4 hidden" ref={canvasRef} />
+      <div className="mt-4 grid max-w-2xl gap-4 rounded-xl border border-accent/45 bg-white/70 p-4">
+        <label className="flex items-center justify-between gap-3 font-semibold text-primary" htmlFor="target-color">
+          Target Color
+          <input
+            id="target-color"
+            type="color"
+            value={color}
+            onChange={handleColorChange}
+          />
+        </label>
+        <label className="font-semibold text-primary" htmlFor="threshold">
+          Threshold: {threshold}
+          <input
+            id="threshold"
+            className="mt-2 w-full"
+            type="range"
+            min="0"
+            max="255"
+            value={threshold}
+            onChange={handleThresholdChange}
+          />
+        </label>
+      </div>
       <Link
         className="mt-5 inline-block rounded-full border border-accent/55 bg-accent-soft px-4 py-2 font-semibold text-primary transition hover:bg-accent hover:text-white"
         to="/videos"

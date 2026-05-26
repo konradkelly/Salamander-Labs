@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getThumbnail } from '../mockApi.js';
 
@@ -7,6 +7,8 @@ export default function Preview() {
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const canvasRef = useRef(null)
+
 
   useEffect(() => {
     if (!filename) {
@@ -30,6 +32,23 @@ export default function Preview() {
         setLoading(false);
       });
   }, [filename]);
+  useEffect(() => {
+  if (!thumbnailUrl) return;
+
+  const canvas = canvasRef.current;
+  const ctx = canvas.getContext("2d");
+
+  const img = new Image();
+
+  img.src = thumbnailUrl;
+
+  img.onload = () => {
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    ctx.drawImage(img, 0, 0);
+  };
+}, [thumbnailUrl]);
 
   let content;
 

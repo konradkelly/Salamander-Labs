@@ -5,6 +5,18 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>salamander-labs</title>
+    <script>
+      // Restore path encoded by 404.html redirect.
+      (function () {
+        var p = new URLSearchParams(window.location.search).get('p');
+        if (p) {
+          window.history.replaceState(
+            null, null,
+            window.location.pathname.replace(/\/$/, '') + decodeURIComponent(p)
+          );
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

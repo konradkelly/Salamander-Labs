@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      // Single-page app GitHub Pages redirect trick.
+      // Encodes the current path into a query string and redirects to the
+      // root index.html, which then restores it via the script in index.html.
+      var base = '/Salamander-Labs';
+      var path = window.location.pathname.slice(base.length);
+      var search = window.location.search;
+      var hash = window.location.hash;
+      window.location.replace(
+        base + '/?p=' + encodeURIComponent(path + search + hash)
+      );
+    </script>
+  </head>
+  <body></body>
+</html>

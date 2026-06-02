@@ -129,7 +129,7 @@ export default function Preview() {
   } else if (thumbnailUrl && filename) {
     content = (
       <img
-        className="mt-4 w-full max-w-2xl rounded-xl border border-accent/45 bg-white/70 p-2"
+        className="h-full w-full rounded-xl border border-accent/45 bg-white/70 object-contain p-2"
         src={thumbnailUrl}
         alt={`Thumbnail for ${filename}`}
       />
@@ -143,8 +143,10 @@ export default function Preview() {
       <h1 className="text-3xl font-extrabold uppercase tracking-wide text-secondary">
         {filename ? `Preview: ${filename}` : 'Preview'}
       </h1>
-      {content}
-      <canvas className="mt-4 w-full max-w-2xl rounded-xl border border-accent/45 bg-white/70 p-2" ref={canvasRef} />
+      <div className="mt-4 flex gap-4">
+        <div className="min-w-0 flex-1">{content}</div>
+        <canvas className="min-w-0 flex-1 rounded-xl border border-accent/45 bg-white/70 p-2" ref={canvasRef} />
+      </div>
       <div className="mt-4 grid max-w-2xl gap-4 rounded-xl border border-accent/45 bg-white/70 p-4">
         <label className="flex items-center justify-between gap-3 font-semibold text-primary" htmlFor="target-color">
           Target Color

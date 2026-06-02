@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getThumbnail } from '../mockApi.js';
+import { getThumbnail } from '../api.js';
 
 export default function Preview() {
   const { filename } = useParams();

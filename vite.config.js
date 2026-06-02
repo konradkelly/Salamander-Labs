@@ -5,4 +5,12 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   base: '/Salamander-Labs/',
   plugins: [react(), tailwindcss()],
+  server: {
+    proxy: {
+      '/api': 'http://localhost:3000',
+      '/thumbnail': 'http://localhost:3000',
+      '/process': 'http://localhost:3000',
+      '/results': 'http://localhost:3000',
+    },
+  },
 })

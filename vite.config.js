@@ -7,10 +7,10 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      '/api': 'http://localhost:3000',
-      '/thumbnail': 'http://localhost:3000',
-      '/process': 'http://localhost:3000',
-      '/results': 'http://localhost:3000',
+      '/api': 'http://localhost:8080',
+      '/thumbnail': 'http://localhost:8080',
+      '/process': 'http://localhost:8080',
+      '/results': 'http://localhost:8080',
     },
   },
 })

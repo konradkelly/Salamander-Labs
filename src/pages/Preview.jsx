@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getThumbnail } from '../api.js';
+import { getThumbnail, submitProcessingJob } from '../api.js';
 
 export default function Preview() {
   const { filename } = useParams();
@@ -12,6 +12,9 @@ export default function Preview() {
   const canvasRef = useRef(null);
   const imgRef = useRef(null);
   const [imageReady, setImageReady] = useState(false);
+  const [submitState, setSubmitState] = useState('idle');
+  const [submitError, setSubmitError] = useState(null);
+  const [jobId, setJobId] = useState(null);
 
   const handleColorChange = (e) => {
     const nextColor = e.target.value;
@@ -24,6 +27,26 @@ export default function Preview() {
     console.log('Threshold changed:', nextThreshold);
     setThreshold(nextThreshold);
   };
+
+  async function handleSubmit() {
+    if (!filename || loading || submitState === 'submitting') {
+      return;
+    }
+
+    setSubmitState('submitting');
+    setSubmitError(null);
+    setJobId(null);
+
+    try {
+      const result = await submitProcessingJob(filename, color, threshold);
+      setJobId(result.jobId);
+      setSubmitState('submitted');
+    } catch (err) {
+      console.error(err);
+      setSubmitError(err.message);
+      setSubmitState('error');
+    }
+  }
 
  // Fetch thumbnail for current filename and manage loading/error state
   useEffect(() => {
@@ -168,6 +191,15 @@ export default function Preview() {
   }
   }, [imageReady, color, threshold]);
 
+  useEffect(() => {
+    if (submitState === 'submitting') {
+      return;
+    }
+    setSubmitState('idle');
+    setSubmitError(null);
+    setJobId(null);
+  }, [filename, color, threshold]);
+
   
 
   let content;
@@ -190,6 +222,17 @@ export default function Preview() {
     );
   } else {
     content = <p className="mt-3 text-primary">Choose a video from the Videos page to see its preview.</p>;
+  }
+
+  const canSubmit = Boolean(filename) && !loading && !error;
+
+  let submitButtonText = 'Submit processing job';
+  if (submitState === 'submitting') {
+    submitButtonText = 'Submitting...';
+  } else if (submitState === 'submitted') {
+    submitButtonText = 'Submitted';
+  } else if (submitState === 'error') {
+    submitButtonText = 'Retry submit';
   }
 
   return (
@@ -223,6 +266,32 @@ export default function Preview() {
             onChange={handleThresholdChange}
           />
         </label>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            id="submit-processing"
+            className="rounded-full border border-accent/55 bg-accent-soft px-4 py-2 font-semibold text-primary transition hover:bg-accent hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+            type="button"
+            onClick={handleSubmit}
+            disabled={!canSubmit || submitState === 'submitting'}
+          >
+            {submitButtonText}
+          </button>
+          {submitState === 'submitting' && (
+            <p className="font-semibold text-primary" role="status">
+              Submitting job...
+            </p>
+          )}
+          {submitState === 'submitted' && (
+            <p className="font-semibold text-emerald-700" role="status">
+              Job submitted successfully: {jobId}
+            </p>
+          )}
+        </div>
+        {submitState === 'error' && submitError && (
+          <p className="rounded-xl border border-rose-300 bg-rose-50 p-3 font-semibold text-rose-800" role="alert">
+            Error: {submitError}
+          </p>
+        )}
       </div>
       <Link
         className="mt-5 inline-block rounded-full border border-accent/55 bg-accent-soft px-4 py-2 font-semibold text-primary transition hover:bg-accent hover:text-white"

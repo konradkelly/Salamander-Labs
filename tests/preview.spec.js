@@ -208,4 +208,85 @@ test.describe('Preview page – centroid overlay', () => {
     const dot = await page.evaluate(findOrangeDot);
     expect(dot).toBeNull();
   });
+
+  // -----------------------------------------------------------------------
+  test('submit button starts idle, submits chosen settings, and shows success', async ({ page }) => {
+    let requestSeen = false;
+
+    await page.route('**/process/**', async (route) => {
+      const reqUrl = new URL(route.request().url());
+      const threshold = reqUrl.searchParams.get('threshold');
+      const targetColor = reqUrl.searchParams.get('targetColor');
+      requestSeen = true;
+
+      expect(targetColor).toBe('610000');
+      expect(threshold).toBe('80');
+
+      // Keep this request pending briefly so the submitting state is visible.
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ jobId: 'job-42' }),
+      });
+    });
+
+    const submitButton = page.locator('#submit-processing');
+
+    await expect(submitButton).toHaveText('Submit processing job');
+    await expect(submitButton).toBeEnabled();
+
+    await setColor(page, '#610000');
+    await setThreshold(page, 80);
+    await submitButton.click();
+
+    await expect(submitButton).toHaveText('Submitting...');
+    await expect(submitButton).toBeDisabled();
+    await expect(page.getByRole('status').filter({ hasText: 'Submitting job...' })).toBeVisible();
+
+    await expect(page.getByRole('status').filter({ hasText: 'Job submitted successfully: job-42' })).toBeVisible();
+    await expect(submitButton).toHaveText('Submitted');
+    await expect(submitButton).toBeEnabled();
+    expect(requestSeen).toBe(true);
+  });
+
+  // -----------------------------------------------------------------------
+  test('submit error shows alert and enables retry state', async ({ page }) => {
+    await page.route('**/process/**', async (route) => {
+      await route.fulfill({
+        status: 400,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'bad request' }),
+      });
+    });
+
+    const submitButton = page.locator('#submit-processing');
+    await submitButton.click();
+
+    await expect(page.getByRole('alert')).toContainText('Error: Server responded 400');
+    await expect(submitButton).toHaveText('Retry submit');
+    await expect(submitButton).toBeEnabled();
+  });
+
+  // -----------------------------------------------------------------------
+  test('changing settings after submit resets button to idle', async ({ page }) => {
+    await page.route('**/process/**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ jobId: 'job-reset-1' }),
+      });
+    });
+
+    const submitButton = page.locator('#submit-processing');
+
+    await submitButton.click();
+    await expect(submitButton).toHaveText('Submitted');
+    await expect(page.getByRole('status').filter({ hasText: 'Job submitted successfully: job-reset-1' })).toBeVisible();
+
+    await setThreshold(page, 81);
+
+    await expect(submitButton).toHaveText('Submit processing job');
+    await expect(page.getByRole('status').filter({ hasText: 'Job submitted successfully:' })).toHaveCount(0);
+  });
 });

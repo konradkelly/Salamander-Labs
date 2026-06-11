@@ -114,7 +114,61 @@ export default function Preview() {
     }
 
     ctx.putImageData(data, 0, 0);
+      
+  // find centroid with BFS
+  const W = canvas.width;
+  const H = canvas.height;
+  // px[] is already the binarized data array (white=on, black=off)
+  const visited = new Uint8Array(W * H);
+  let best = null; // { size, cx, cy }
+
+  for (let r = 0; r < H; r++) {
+    for (let c = 0; c < W; c++) {
+      const idx = r * W + c;
+      if (px[idx * 4] !== 255 || visited[idx]) continue;
+
+      // BFS (mirrors salamanderSearch)
+      const queue = [idx];
+      visited[idx] = 1;
+      let head = 0, size = 0, sumC = 0, sumR = 0;
+
+      while (head < queue.length) {
+        const i = queue[head++];
+        const ir = Math.floor(i / W);
+        const ic = i % W;
+        size++;
+        sumC += ic;
+        sumR += ir;
+
+        for (const [nr, nc] of [[ir-1,ic],[ir+1,ic],[ir,ic-1],[ir,ic+1]]) {
+          if (nr >= 0 && nr < H && nc >= 0 && nc < W) {
+            const ni = nr * W + nc;
+            if (!visited[ni] && px[ni * 4] === 255) {
+              visited[ni] = 1;
+              queue.push(ni);
+            }
+          }
+        }
+      }
+
+      if (!best || size > best.size) {
+        best = { size, cx: sumC / size, cy: sumR / size };
+      }
+    }
+  }
+
+  if (best) {
+    ctx.beginPath();
+    ctx.arc(best.cx, best.cy, 6, 0, 2 * Math.PI);
+    ctx.fillStyle = '#f97316';
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
   }, [imageReady, color, threshold]);
+
+  
 
   let content;
 

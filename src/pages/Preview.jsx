@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getThumbnail, submitProcessingJob } from '../api.js';
+import { getThumbnail, submitProcessingJob, getJobStatus } from '../api.js';
 
 export default function Preview() {
   const { filename } = useParams();
@@ -15,6 +15,8 @@ export default function Preview() {
   const [submitState, setSubmitState] = useState('idle');
   const [submitError, setSubmitError] = useState(null);
   const [jobId, setJobId] = useState(null);
+  const [jobStatus, setJobStatus] = useState(null);
+  const [csvUrl, setCsvUrl] = useState(null);
 
   const handleColorChange = (e) => {
     const nextColor = e.target.value;
@@ -36,6 +38,8 @@ export default function Preview() {
     setSubmitState('submitting');
     setSubmitError(null);
     setJobId(null);
+    setJobStatus(null);
+    setCsvUrl(null);
 
     try {
       const result = await submitProcessingJob(filename, color, threshold);
@@ -200,7 +204,32 @@ export default function Preview() {
     setJobId(null);
   }, [filename, color, threshold]);
 
-  
+useEffect(() => {
+  if (!jobId) return;
+
+  const intervalId = setInterval(async () => {
+    try {
+      const result = await getJobStatus(jobId);
+
+      setJobStatus(result.status);
+
+      if (result.status === 'complete') {
+        setCsvUrl(result.csvUrl);
+        clearInterval(intervalId);
+      }
+
+      if (result.status === 'failed') {
+        clearInterval(intervalId);
+      }
+    } catch (err) {
+      console.error(err);
+      clearInterval(intervalId);
+    }
+  }, 1500);
+
+  return () => clearInterval(intervalId);
+}, [jobId]);
+ 
 
   let content;
 
@@ -286,6 +315,22 @@ export default function Preview() {
               Job submitted successfully: {jobId}
             </p>
           )}
+          {jobStatus && (
+      <p className="font-semibold text-primary">
+      Status: {jobStatus}
+      </p>
+          )}
+
+        {csvUrl && (
+          <a
+            href={csvUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="font-semibold text-blue-600 underline"
+          >
+            Download CSV
+          </a>
+        )}
         </div>
         {submitState === 'error' && submitError && (
           <p className="rounded-xl border border-rose-300 bg-rose-50 p-3 font-semibold text-rose-800" role="alert">

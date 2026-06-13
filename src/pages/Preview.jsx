@@ -266,7 +266,9 @@ useEffect(() => {
 
   return (
     <section className="rounded-2xl border border-accent/35 bg-white/90 p-6 shadow-sm ring-2 ring-accent/20">
-      <h1 className="text-3xl font-extrabold uppercase tracking-wide text-secondary">
+      {/* <h1 className="text-3xl font-extrabold uppercase tracking-wide text-secondary"> */}
+      <h1 className="text-4xl font-black uppercase tracking-wide text-secondary">
+  
         {filename ? `Preview: ${filename}` : 'Preview'}
       </h1>
       <div className="mt-4 flex gap-4">

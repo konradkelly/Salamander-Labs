@@ -16,6 +16,7 @@ export default function Preview() {
   const [submitError, setSubmitError] = useState(null);
   const [jobId, setJobId] = useState(null);
   const [jobStatus, setJobStatus] = useState(null);
+  const [jobError, setJobError] = useState(null);
   const [csvUrl, setCsvUrl] = useState(null);
 
   const handleColorChange = (e) => {
@@ -39,6 +40,7 @@ export default function Preview() {
     setSubmitError(null);
     setJobId(null);
     setJobStatus(null);
+    setJobError(null);
     setCsvUrl(null);
 
     try {
@@ -202,33 +204,40 @@ export default function Preview() {
     setSubmitState('idle');
     setSubmitError(null);
     setJobId(null);
+    setJobStatus(null);
+    setJobError(null);
+    setCsvUrl(null);
   }, [filename, color, threshold]);
 
-useEffect(() => {
-  if (!jobId) return;
+  useEffect(() => {
+    if (!jobId) return;
 
-  const intervalId = setInterval(async () => {
-    try {
-      const result = await getJobStatus(jobId);
+    const intervalId = setInterval(async () => {
+      try {
+        const result = await getJobStatus(jobId);
 
-      setJobStatus(result.status);
+        setJobStatus(result.status);
 
-      if (result.status === 'complete') {
-        setCsvUrl(result.csvUrl);
+        const isComplete = result.status === 'done' || result.status === 'complete';
+        if (isComplete) {
+          setCsvUrl(result.result ?? result.csvUrl);
+          clearInterval(intervalId);
+          return;
+        }
+
+        if (result.status === 'failed' || result.status === 'error') {
+          setJobError(result.message ?? result.error ?? 'Processing failed on the server.');
+          clearInterval(intervalId);
+        }
+      } catch (err) {
+        console.error(err);
+        setJobError(err.message);
         clearInterval(intervalId);
       }
+    }, 1500);
 
-      if (result.status === 'failed') {
-        clearInterval(intervalId);
-      }
-    } catch (err) {
-      console.error(err);
-      clearInterval(intervalId);
-    }
-  }, 1500);
-
-  return () => clearInterval(intervalId);
-}, [jobId]);
+    return () => clearInterval(intervalId);
+  }, [jobId]);
  
 
   let content;
@@ -318,9 +327,17 @@ useEffect(() => {
             </p>
           )}
           {jobStatus && (
-      <p className="font-semibold text-primary">
-      Status: {jobStatus}
-      </p>
+            <p
+              className={`font-semibold ${jobStatus === 'done' || jobStatus === 'complete' ? 'text-emerald-700' : jobStatus === 'error' || jobStatus === 'failed' ? 'text-rose-800' : 'text-primary'}`}
+              role="status"
+            >
+              Status: {jobStatus}
+            </p>
+          )}
+          {jobError && (
+            <p className="rounded-xl border border-rose-300 bg-rose-50 p-3 font-semibold text-rose-800" role="alert">
+              {jobError}
+            </p>
           )}
 
         {csvUrl && (

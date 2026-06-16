@@ -1,0 +1,13 @@
+aws_region          = "us-east-1"
+environment         = "prod"
+github_org          = "YOUR_GITHUB_ORG"
+github_repo         = "YOUR_FRONTEND_REPO"
+
+# From backend repo: terraform -chdir=terraform/environments/prod output -raw alb_dns_name
+api_origin_domain   = "centroid-prod-alb-1234567890.us-east-1.elb.amazonaws.com"
+api_origin_protocol = "http-only"
+api_origin_port     = 80
+
+# Optional custom domain (requires ACM cert in us-east-1):
+# cloudfront_aliases         = ["app.example.com"]
+# cloudfront_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT:certificate/..."

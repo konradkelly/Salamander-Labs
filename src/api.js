@@ -16,6 +16,12 @@ function shouldFallbackFromError(error) {
   return isDev && error instanceof TypeError;
 }
 
+function normalizeJobStatus(data) {
+  // Backend returns { status, result }; mocks may use csvUrl instead.
+  const csvUrl = data.result ?? data.csvUrl ?? null;
+  return { ...data, csvUrl };
+}
+
 export async function getVideos() {
   try {
     const res = await fetch('/api/videos');
@@ -80,15 +86,15 @@ export async function getJobStatus(jobId) {
   try {
     const res = await fetch(`/process/${jobId}/status`);
     if (res.ok) {
-      return res.json();
+      return normalizeJobStatus(await res.json());
     }
     if (shouldFallbackFromStatus(res.status)) {
-      return getJobStatusMock(jobId);
+      return normalizeJobStatus(await getJobStatusMock(jobId));
     }
     throw new Error(`Server responded ${res.status}`);
   } catch (error) {
     if (shouldFallbackFromError(error)) {
-      return getJobStatusMock(jobId);
+      return normalizeJobStatus(await getJobStatusMock(jobId));
     }
     throw error;
   }

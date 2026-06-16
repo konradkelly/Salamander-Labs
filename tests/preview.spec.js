@@ -269,6 +269,55 @@ test.describe('Preview page – centroid overlay', () => {
   });
 
   // -----------------------------------------------------------------------
+  test('completed job shows download link from backend result field', async ({ page }) => {
+    let statusChecks = 0;
+
+    await page.route('**/process/**', async (route) => {
+      const url = route.request().url();
+      const method = route.request().method();
+
+      if (method === 'POST') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ jobId: 'job-done-1' }),
+        });
+        return;
+      }
+
+      if (url.endsWith('/status')) {
+        statusChecks += 1;
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            status: 'done',
+            result: '/results/salamander1-job-done-1.csv',
+          }),
+        });
+        return;
+      }
+
+      await route.continue();
+    });
+
+    const submitButton = page.locator('#submit-processing');
+    await submitButton.click();
+
+    await expect(page.getByRole('status').filter({ hasText: 'Status: done' })).toBeVisible({
+      timeout: 10000,
+    });
+
+    const downloadLink = page.locator('#download-csv');
+    await expect(downloadLink).toBeVisible();
+    await expect(downloadLink).toHaveAttribute(
+      'href',
+      '/results/salamander1-job-done-1.csv'
+    );
+    expect(statusChecks).toBeGreaterThan(0);
+  });
+
+  // -----------------------------------------------------------------------
   test('changing settings after submit resets button to idle', async ({ page }) => {
     await page.route('**/process/**', async (route) => {
       await route.fulfill({

@@ -2,6 +2,15 @@ import { useEffect, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getThumbnail, submitProcessingJob, getJobStatus } from '../api.js';
 
+function buildResultUrl(videoFilename, jobId) {
+  const baseName = videoFilename.replace(/\.[^.]+$/, '');
+  return `/results/${baseName}-${jobId}.csv`;
+}
+
+function isJobComplete(status) {
+  return status === 'done' || status === 'complete';
+}
+
 export default function Preview() {
   const { filename } = useParams();
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
@@ -218,9 +227,8 @@ export default function Preview() {
 
         setJobStatus(result.status);
 
-        const isComplete = result.status === 'done' || result.status === 'complete';
-        if (isComplete) {
-          setCsvUrl(result.result ?? result.csvUrl);
+        if (isJobComplete(result.status)) {
+          setCsvUrl(result.csvUrl);
           clearInterval(intervalId);
           return;
         }
@@ -272,6 +280,10 @@ export default function Preview() {
   } else if (submitState === 'error') {
     submitButtonText = 'Retry submit';
   }
+
+  const downloadUrl =
+    csvUrl ??
+    (isJobComplete(jobStatus) && jobId && filename ? buildResultUrl(filename, jobId) : null);
 
   return (
     <section className="rounded-2xl border border-accent/35 bg-white/90 p-6 shadow-sm ring-2 ring-accent/20">
@@ -328,7 +340,7 @@ export default function Preview() {
           )}
           {jobStatus && (
             <p
-              className={`font-semibold ${jobStatus === 'done' || jobStatus === 'complete' ? 'text-emerald-700' : jobStatus === 'error' || jobStatus === 'failed' ? 'text-rose-800' : 'text-primary'}`}
+              className={`font-semibold ${isJobComplete(jobStatus) ? 'text-emerald-700' : jobStatus === 'error' || jobStatus === 'failed' ? 'text-rose-800' : 'text-primary'}`}
               role="status"
             >
               Status: {jobStatus}
@@ -340,11 +352,11 @@ export default function Preview() {
             </p>
           )}
 
-        {csvUrl && (
+        {downloadUrl && (
           <a
-            href={csvUrl}
-            target="_blank"
-            rel="noreferrer"
+            id="download-csv"
+            href={downloadUrl}
+            download
             className="font-semibold text-blue-600 underline"
           >
             Download CSV

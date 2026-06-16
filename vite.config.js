@@ -3,7 +3,8 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  base: '/Salamander-Labs/',
+  // GitHub Pages uses /Salamander-Labs/; AWS CloudFront uses / (set VITE_BASE_PATH=/ in CI).
+  base: process.env.VITE_BASE_PATH || '/Salamander-Labs/',
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
